@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Otel Fiyat Yönetimi Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Otel Fiyat Yönetimi Dashboard</h1>
+    <div class="header-actions">
+      <button id="resetData" class="ghost-button" title="Örnek veriyi tekrar yükle">Veriyi Sıfırla</button>
+      <button id="exportCsv" class="primary-button">CSV Dışa Aktar</button>
+    </div>
+  </header>
+
+  <main class="app-container">
+    <nav class="sidebar">
+      <button class="sidebar-tab active" data-target="dashboardView">Dashboard</button>
+      <button class="sidebar-tab" data-target="dataView">Veri Yönetimi</button>
+      <button class="sidebar-tab" data-target="auditView">Audit</button>
+      <button class="sidebar-tab" data-target="settingsView">Ayarlar</button>
+    </nav>
+
+    <section class="content">
+      <section id="dashboardView" class="view active">
+        <section class="filters">
+          <div class="filter-group">
+            <label for="hotelSelect">Otel</label>
+            <select id="hotelSelect"></select>
+          </div>
+          <div class="filter-group">
+            <label for="dateStart">Başlangıç Tarihi</label>
+            <input type="date" id="dateStart" />
+          </div>
+          <div class="filter-group">
+            <label for="dateEnd">Bitiş Tarihi</label>
+            <input type="date" id="dateEnd" />
+          </div>
+          <div class="filter-group">
+            <label>Mod</label>
+            <div class="segmented-control">
+              <button class="mode-button active" data-mode="spread">Spread</button>
+              <button class="mode-button" data-mode="change">Değişim</button>
+            </div>
+          </div>
+          <div class="filter-group is-hidden" id="changeMetricGroup">
+            <label>Değişim Türü</label>
+            <div class="segmented-control">
+              <button class="change-metric-button active" data-metric="dod">Günlük</button>
+              <button class="change-metric-button" data-metric="wow">Haftalık</button>
+              <button class="change-metric-button" data-metric="mom">Aylık</button>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>Pazarlar</label>
+            <div id="marketFilters" class="checkbox-group"></div>
+          </div>
+        </section>
+
+        <section class="summary" id="summaryCards"></section>
+
+        <section class="chart-wrapper">
+          <canvas id="priceChart" height="120"></canvas>
+        </section>
+
+        <section class="table-wrapper">
+          <table id="resultTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </section>
+      </section>
+
+      <section id="dataView" class="view">
+        <div class="data-grid">
+          <section class="card">
+            <h2>Kontrat Ekle</h2>
+            <form id="contractForm" class="form-grid">
+              <label>Otel<select name="hotelId"></select></label>
+              <label>Pazar<select name="marketId"></select></label>
+              <label>Başlangıç<input type="date" name="startDate" required></label>
+              <label>Bitiş<input type="date" name="endDate" required></label>
+              <label>Kişi Başı Fiyat<input type="number" name="price" step="0.01" required></label>
+              <label>Komisyon (%)<input type="number" name="commission" step="0.01" value="0"></label>
+              <button type="submit" class="primary-button">Kaydet</button>
+            </form>
+          </section>
+
+          <section class="card">
+            <h2>İndirim Tanımla</h2>
+            <form id="discountForm" class="form-grid">
+              <label>Otel<select name="hotelId"></select></label>
+              <label>Pazar<select name="marketId"></select></label>
+              <label>Başlangıç<input type="date" name="startDate" required></label>
+              <label>Bitiş<input type="date" name="endDate" required></label>
+              <label>İndirim (%)<input type="number" name="discount" step="0.01" required></label>
+              <button type="submit" class="primary-button">Kaydet</button>
+            </form>
+          </section>
+
+          <section class="card">
+            <h2>Döviz Kuru Gir</h2>
+            <form id="rateForm" class="form-grid">
+              <label>Pazar<select name="marketId"></select></label>
+              <label>Tarih<input type="date" name="date" required></label>
+              <label>EUR Karşılığı<input type="number" name="rate" step="0.0001" required></label>
+              <button type="submit" class="primary-button">Kaydet</button>
+            </form>
+          </section>
+        </div>
+
+        <div class="data-lists">
+          <section class="card">
+            <h2>Kontratlar</h2>
+            <div id="contractList" class="list"></div>
+          </section>
+          <section class="card">
+            <h2>İndirimler</h2>
+            <div id="discountList" class="list"></div>
+          </section>
+          <section class="card">
+            <h2>Kurlar</h2>
+            <div id="rateList" class="list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="auditView" class="view">
+        <section class="card">
+          <h2>Değişiklik Kaydı</h2>
+          <ul id="auditList" class="audit-list"></ul>
+        </section>
+      </section>
+
+      <section id="settingsView" class="view">
+        <section class="card settings-card">
+          <h2>Kullanıcı Ayarları</h2>
+          <form id="settingsForm" class="form-grid">
+            <label>Baz Pazar<select name="baseMarket"></select></label>
+            <label>Uyarı Eşiği (%)<input type="number" name="warningThreshold" step="0.1" value="5"></label>
+            <label>Kritik Eşiği (%)<input type="number" name="criticalThreshold" step="0.1" value="10"></label>
+            <label>Tema<select name="theme">
+              <option value="light">Açık</option>
+              <option value="dark">Koyu</option>
+            </select></label>
+            <button type="submit" class="primary-button">Kaydet</button>
+          </form>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span>Veriler tarayıcıda saklanır. Son güncelleme: <strong id="lastUpdated">-</strong></span>
+  </footer>
+</body>
+</html>
